@@ -1,4 +1,4 @@
-cnocr==2.3.0.1
+cnocr==2.3.0.2
 loguru==0.7.2
 numpy==1.26.4
 opencv_python==4.9.0.80
