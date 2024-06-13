@@ -1,35 +1,42 @@
 """
 Author: Night-stars-1 nujj1042633805@gmail.com
 Date: 2024-04-02 19:27:03
-LastEditTime: 2024-04-17 00:36:55
+LastEditTime: 2024-05-05 20:19:52
 LastEditors: Night-stars-1 nujj1042633805@gmail.com
 """
 
+import asyncio
+import subprocess
 from typing import Union
 
-# coding: utf-8
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QWidget
+from qfluentwidgets import DotInfoBadge
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import (
+    InfoBadgePosition,
+    InfoBar,
+    InfoBarPosition,
     MSFluentWindow,
     NavigationBarPushButton,
     NavigationItemPosition,
     SplashScreen,
 )
 
+from app.common import resource  # 图标数据
+from app.common.config import VERSION, cfg
+from app.common.icon import FluentIconBase
+from app.common.signal_bus import signalBus
 from app.view.daily_task_interface import DailyTaskInterface
 from app.view.running_business_interface import RunningBusinessInterface
+from updater import Updater, UpdateStatus
 
-from ..common import resource  # 图标数据
-from ..common.config import cfg, VERSION
-from ..common.icon import FluentIconBase
-from ..common.signal_bus import signalBus
 from .home_interface import HomeInterface
 from .logger_interface import LoggerInterface
 from .setting_interface import SettingInterface
 from .taj_interface import TajInterface
+from .this_road_that_interface import ThisRoadThatInterface
 
 
 class MainWindow(MSFluentWindow):
@@ -47,12 +54,16 @@ class MainWindow(MSFluentWindow):
         self.settingInterface = SettingInterface(self)
         self.daily_task_interface = DailyTaskInterface(self)
         self.running_business_interface = RunningBusinessInterface(self)
+        self.this_road_that_interface = ThisRoadThatInterface(self)
 
         self.connectSignalToSlot()
 
         # add items to navigation interface
         self.initNavigation()
         self.splashScreen.finish()
+        # 检查更新
+        self.is_updae = False
+        asyncio.run(self.checkUpdate())
 
     def connectSignalToSlot(self):
         signalBus.micaEnableChanged.connect(self.setMicaEffectEnabled)
@@ -64,12 +75,21 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.tajInterface, FIF.AIRPLANE, "铁安局")
         self.addSubInterface(self.daily_task_interface, FIF.CALENDAR, "每日任务")
         self.addSubInterface(self.running_business_interface, FIF.TRAIN, "跑商配置")
+        self.addSubInterface(self.this_road_that_interface, FIF.TRAIN, "我建我路")
 
         # add custom widget to bottom
         self.addSubInterface(
             self.loggerInterface,
             FIF.ALIGNMENT,
             "日志",
+            position=NavigationItemPosition.BOTTOM,
+        )
+        self.updateButton = self.navigationInterface.addItem(
+            routeKey="Update",
+            icon=FIF.UPDATE,
+            text="更新",
+            onClick=self.Update,
+            selectable=False,
             position=NavigationItemPosition.BOTTOM,
         )
         self.addSubInterface(
@@ -120,3 +140,55 @@ class MainWindow(MSFluentWindow):
     def switchToCard(self, routeKey):
         """switch to card"""
         self.switchTo(self.wights[routeKey])
+
+    def Update(self):
+        """
+        说明:
+            检查更新
+        """
+        if self.update_status == UpdateStatus.UPDATE:
+            subprocess.Popen(
+                ["HeiYue Updater.exe"], creationflags=subprocess.DETACHED_PROCESS
+            )
+            exit()
+        elif self.update_status == UpdateStatus.FAILURE:
+            InfoBar.error(
+                title="检查更新失败",
+                content="请稍后重试",
+                orient=Qt.Horizontal,
+                isClosable=False,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self,
+            )
+        elif self.update_status == UpdateStatus.NOSUPPORT:
+            InfoBar.error(
+                title="更新程序只支持打包成exe后运行",
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=False,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self,
+            )
+        else:
+            InfoBar.success(
+                title="当前已是最新版本",
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=False,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self,
+            )
+
+    async def checkUpdate(self):
+        updater = Updater()
+        self.update_status, _ = await updater.get_update_status()
+        if self.update_status == UpdateStatus.UPDATE:
+            self.updateBadge = DotInfoBadge.error(
+                parent=self.navigationInterface,
+                target=self.updateButton,
+                position=InfoBadgePosition.NAVIGATION_ITEM,
+            )
+            self.updateBadge.setFixedSize(10, 10)

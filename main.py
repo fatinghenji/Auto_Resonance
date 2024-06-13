@@ -1,20 +1,31 @@
 """
 Author: Night-stars-1 nujj1042633805@gmail.com
 Date: 2024-03-20 22:24:35
-LastEditTime: 2024-04-15 22:30:09
+LastEditTime: 2024-05-19 21:26:03
 LastEditors: Night-stars-1 nujj1042633805@gmail.com
 """
 
+import traceback
+from pathlib import Path
+from typing import Dict
+
 from loguru import logger
 
-from auto.huashi.main import start as ra_start
-from auto.railway_safety_bureau.main import start as rsb_start
+import auto
+from auto.run_business import stop as business_stop
 from core.adb import connect
 from core.adb import stop as adb_stop
 from core.analysis_tasks import AnalysisTasks
 from core.utils import read_json
 
 analysis = None
+
+NEW_UPDATER_PATH = Path("HeiYue Updater.exe.new")
+OLD_UPDATER_PATH = Path("HeiYue Updater.exe")
+
+# 检查是否存在HeiYue Updater.exe.new存在则覆盖HeiYue Updater.exe
+if NEW_UPDATER_PATH.exists():
+    NEW_UPDATER_PATH.replace(OLD_UPDATER_PATH)
 
 
 def stop():
@@ -23,13 +34,21 @@ def stop():
         停止运行
     """
     adb_stop()
+    business_stop()
 
 
-def main(order, path):
-    status = connect(order, path)
+def main(tasks: Dict[str, str]):
+    status = connect()
     if status:
-        ra_start()
-        rsb_start()
+        for description, task in tasks.items():
+            logger.info(f"开始运行{description}")
+            if task := getattr(auto, task, None):
+                if start := getattr(task, "start"):
+                    start()
+                else:
+                    logger.error(f"{task}模块没有start函数")
+            else:
+                logger.error(f"未找到{task}模块")
     else:
         logger.error("ADB连接失败")
     return status
@@ -64,4 +83,4 @@ def run():
 
 
 if __name__ == "__main__":
-    main()
+    run()

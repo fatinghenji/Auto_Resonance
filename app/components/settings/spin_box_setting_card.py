@@ -1,7 +1,7 @@
 """
 Author: Night-stars-1 nujj1042633805@gmail.com
 Date: 2024-04-07 23:54:39
-LastEditTime: 2024-04-12 13:01:47
+LastEditTime: 2024-05-10 23:18:18
 LastEditors: Night-stars-1 nujj1042633805@gmail.com
 """
 
@@ -10,6 +10,8 @@ from typing import Union
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
 from qfluentwidgets import ConfigItem, FluentIconBase, SettingCard, SpinBox, qconfig
+
+from app.common.signal_bus import signalBus
 
 
 class SpinBoxSettingCard(SettingCard):
@@ -55,6 +57,10 @@ class SpinBoxSettingCard(SettingCard):
         self.spinBox.valueChanged.connect(self.valueChanged)
         self.hBoxLayout.addWidget(self.spinBox, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(16)
+        signalBus.skillchanged.connect(self.onskillchanged)
 
     def valueChanged(self, value: int):
         qconfig.set(self.configItem, value)
+
+    def onskillchanged(self):
+        self.spinBox.setValue(self.configItem.value)

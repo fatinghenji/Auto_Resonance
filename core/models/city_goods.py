@@ -1,7 +1,7 @@
 """
 Author: Night-stars-1 nujj1042633805@gmail.com
 Date: 2024-04-08 17:45:06
-LastEditTime: 2024-04-12 20:58:21
+LastEditTime: 2024-04-28 19:00:55
 LastEditors: Night-stars-1 nujj1042633805@gmail.com
 """
 
@@ -28,18 +28,16 @@ class RouteModel(BaseModel):
 
     buy_city_name: str = ""
     """购买城市"""
+    buy_argaining_num: int = 0
+    """购买议价次数"""
     sell_city_name: str = ""
     """出售城市"""
+    sell_argaining_num: int = 0
+    """出售议价次数"""
     goods_data: Dict[str, GoodsData] = {}
     """商品数据"""
     buy_goods: Dict[str, int] = {}
     """待购商品列表"""
-    normal_goods: Dict[str, int] = {}
-    """低价值商品"""
-    primary_goods: List[str] = []
-    """主要商品"""
-    secondary_goods: List[str] = []
-    """次要商品"""
     buy_price: int = 0
     """总购价"""
     sell_price: int = 0

@@ -1,7 +1,7 @@
 """
 Author: Night-stars-1 nujj1042633805@gmail.com
 Date: 2024-04-05 15:17:19
-LastEditTime: 2024-04-12 22:02:20
+LastEditTime: 2024-06-12 23:23:01
 LastEditors: Night-stars-1 nujj1042633805@gmail.com
 """
 
@@ -11,58 +11,79 @@ from loguru import logger
 
 from core.adb import input_tap, screenshot
 from core.exception_handling import get_excption
-from core.image import get_bgr
-from core.ocr import predict
-from core.utils import compare_ranges
+from core.image import get_bgr, get_hsv
+from core.module.bgr import BGR, BGRGroup
+from core.ocr import number_predict, predict
 
 
-def sell_business(num=20):
+def sell_business(num=0):
     """
     说明:
         出售所有商品
     参数:
         :param num: 期望议价的价格
     """
-    while not is_empty_goods():
-        input_tap((820, 163))
-    logger.info("货物已全部出售")
-    click_bargain_button(num)
-    click_sell_button()
-    time.sleep(0.5)
-    return input_tap((896, 676))
+    start_time = time.perf_counter()
+    while time.perf_counter() - start_time < 15:
+        bgr = get_bgr(screenshot(), (1156, 100))
+        logger.debug(f"是否出售货物颜色检查 {bgr}")
+        if not (bgr.b == 0 and bgr.g == 0 and 90 <= bgr.r <= 100):
+            logger.debug(f"出售全部货物颜色检查 {bgr}")
+            input_tap((1187, 103))
+            time.sleep(0.5)
+            break
+    if is_empty_goods():
+        logger.error("检测到未成功出售物品")
+        return False
+    else:
+        click_bargain_button(num)
+        click_sell_button()
+        time.sleep(0.5)
+        return input_tap((896, 676))
 
 
 def is_empty_goods():
     bgr = get_bgr(
-        screenshot(), (728, 235), cropped_pos1=(477, 188), cropped_pos2=(859, 262)
+        screenshot(), (898, 169), cropped_pos1=(870, 132), cropped_pos2=(994, 205)
     )
-    return [18, 25, 25] <= bgr <= [25, 30, 30]
+    logger.debug(f"货物是否为空检查 {bgr}")
+    return BGR(25, 33, 33) == bgr
 
 
-def click_bargain_button(num=20):
-    for _ in range(5):
-        reslut = predict(screenshot(), (993, 448), (1029, 477))
-        if len(reslut) > 0:
-            bargain = reslut[0]["text"]
-            logger.info(f"抬价幅度: {bargain}")
-            if num == float(bargain[:-1]):
-                return True
+def click_bargain_button(num=0):
+    """
+    说明:
+        点击议价按钮
+    参数:
+        :param num: 议价次数
+    """
+    logger.info(f"议价次数: {num}")
+    start = time.perf_counter()
+    while time.perf_counter() - start < 15:
+        if num <= 0:
+            return True
+        bgr = get_bgr(screenshot(), (1176, 461))
+        logger.debug(f"抬价界面颜色检查: {bgr}")
+        if BGRGroup([0, 170, 240], [5, 185, 253]) == bgr:
+            input_tap((1177, 461))
+            time.sleep(1.0)
+        elif bgr == [251, 253, 253]:
+            logger.info("议价次数不足")
+            return True
+        elif bgr == [62, 63, 63]:
+            logger.info("疲劳不足")
+            input_tap((83, 36))
+            return True
+        hsv = get_hsv(screenshot(), (626, 273), (516, 224), (787, 439))
+        logger.debug(f"抬价是否成功颜色检查(HSV): {hsv}")
+        if 30 <= hsv[0] <= 40:
+            logger.info("抬价成功")
+            num -= 1
+        else:
+            logger.info("抬价失败")
         if get_excption() == "议价次数不足":
             return False
-        start = time.perf_counter()
-        while time.perf_counter() - start < 5:
-            bgr = get_bgr(screenshot(), (1176, 461))
-            logger.debug(f"议价界面颜色检查: {bgr}")
-            if compare_ranges([0, 170, 240], bgr, [0, 183, 253]):
-                input_tap((1177, 461))
-                time.sleep(0.5)
-            elif bgr == [251, 253, 253]:
-                logger.info("议价次数不足")
-                return True
-            elif bgr == [62, 63, 63]:
-                logger.info("疲劳不足")
-                input_tap((83, 36))
-                return True
+
     return False
 
 

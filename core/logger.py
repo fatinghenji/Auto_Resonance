@@ -2,22 +2,24 @@
 Author: Night-stars-1 nujj1042633805@gmail.com
 Date: 2023-05-15 21:45:43
 LastEditors: Night-stars-1 nujj1042633805@gmail.com
-LastEditTime: 2023-07-17 23:26:54
+LastEditTime: 2024-04-29 13:02:23
 Description: 
 
 Copyright (c) 2023 by Night-stars-1, All Rights Reserved. 
 """
 
-import os
+import os.path
 import sys
 
 from loguru import logger
+
+from version import __version__
 
 path_log = os.path.join("logs", "debug.log")
 LEVEL = "DEBUG"
 logger.remove()
 
-if not getattr(sys, 'frozen', False):
+if not getattr(sys, "frozen", False):
     logger.add(
         sys.stdout,
         level=LEVEL,
@@ -39,3 +41,5 @@ logger.add(
     encoding="utf-8",
     retention="10 days",
 )
+
+logger.info(f"当前版本: {__version__}")

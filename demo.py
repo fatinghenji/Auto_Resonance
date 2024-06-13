@@ -1,20 +1,19 @@
 """
 Author: Night-stars-1 nujj1042633805@gmail.com
 Date: 2024-04-04 17:56:16
-LastEditTime: 2024-04-19 13:11:27
+LastEditTime: 2024-04-21 00:05:43
 LastEditors: Night-stars-1 nujj1042633805@gmail.com
 """
 
 from loguru import logger
 
-from auto.run_business import run
-from auto.run_business.main import buy_business, go_business
+from auto.run_business import run, start
+from auto.run_business.main import buy_business, click_station, go_business
+from auto.run_business.sell import sell_business
 from core.adb import connect
 
-if __name__ == "__main__1":
+if __name__ == "__main__":
     run(
-        order="127.0.0.1:7555",
-        path="resources\\lib\\adb",
         city_book={
             "7号自由港": 3,
             "修格里城": 3,
@@ -55,27 +54,26 @@ if __name__ == "__main__1":
             "曼德矿场": 12,
             "澄明数据中心": 16,
         },
-        city_tired={
-            "7号自由港": 30,
-            "修格里城": 30,
-            "曼德矿场": 30,
-            "淘金乐园": 30,
-            "澄明数据中心": 30,
-            "荒原站": 30,
-            "铁盟哨站": 30,
-            "阿妮塔战备工厂": 30,
-            "阿妮塔能源研究所": 30,
+        negotiate_price={
+            "7号自由港": 2,
+            "修格里城": 2,
+            "曼德矿场": 2,
+            "淘金乐园": 2,
+            "澄明数据中心": 2,
+            "荒原站": 2,
+            "铁盟哨站": 2,
+            "阿妮塔战备工厂": 2,
+            "阿妮塔能源研究所": 2,
+            "buyTired": 8,
+            "sellTired": 8,
         },
         max_goods_num=625,
     )
     # click_station("修格里城")
 
-if __name__ == "__main__":
-    connect("127.0.0.1:16384")
+if __name__ == "__main__2":
     # go_business("buy")
-    buy_business(
-        ["火澄石", "负片炮弹", "钛合金"],
-        [],
-        0,
-        max_book=0,
-    )
+
+    start()
+
+    # click_station("荒原站")
